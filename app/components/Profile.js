@@ -1,78 +1,77 @@
-var React = require('react');
-var Router = require('react-router');
-var UserProfile = require('../components/github/UserProfile');
-var Repos = require('../components/github/Repos');
-var Notes = require('../components/notes/Notes');
-var ReactFireMixin = require('reactfire');
-var Firebase = require('firebase');
-var helpers = require('../utils/helpers');
+import React from 'react';
+import Repos from './github/Repos';
+import UserProfile from './github/UserProfile';
+import Notes from './notes/Notes';
+import helpers from '../utils/helpers';
+import Rebase from 're-base';
 
-var Profile = React.createClass({
-  mixins: [Router.State, ReactFireMixin],
+let base = Rebase.createClass('https://github-note-taker.firebaseio.com/');
 
-  getInitialState: function() {
-    return {
+class Profile extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state = {
       notes: [],
       bio: {},
       repos: []
     };
-  },
-  init: function () {
-    // Go 1 level deep in db object selecting the username endpoint based on the url params
-    var childRef = this.ref.child(this.getParams().username);
-    // bindAsArray from Firebase mixin. First arg is Firebase db
-    // Second arg is the prop on the state which we want to bind the db to.
-    // When Firebase endpoint changes, our local state is updated
-    this.bindAsArray(childRef, 'notes');
+  }
+  init() {
+    this.ref = base.bindToState(this.router.getCurrentParams().username, {
+      context: this,
+      asArray: true,
+      state: 'notes'
+    });
 
-    helpers.getGithubInfo(this.getParams().username)
-      .then(function (dataObj) {
+    helpers.getGithubInfo(this.router.getCurrentParams().username)
+      .then((dataObj) => {
         this.setState({
           bio: dataObj.bio,
           repos: dataObj.repos
         });
-      }.bind(this));
-  },
-  // AJAX calls and Firebase setup goes in this lifecycle event
-  componentDidMount: function() {
-    // Reference for Firebase database. Returns an object of db
-    this.ref = new Firebase('https://a-github-note-taker.firebaseio.com');
+      });
+  }
+  componentWillMount() {
+    this.router = this.context.router;
+  }
+  componentDidMount() {
     this.init();
-  },
-  // Unbind lsiteners on notes state from db when component unmounts
-  componentWillUnmount: function() {
-    this.unbind('notes');
-  },
-
-  componentWillReceiveProps: function(nextProps) {
-    this.unbind('notes');
+  }
+  componentWillUnmount() {
+    base.removeBinding(this.ref);
+  }
+  componentWillReceiveProps() {
+    base.removeBinding(this.ref);
     this.init();
-  },
-
-  handleAddNote: function (newNote) {
-    this.ref.child(this.getParams().username).set(this.state.notes.concat([newNote]));
-  },
-
-  render: function () {
-    var username = this.getParams().username;
-
+  }
+  handleAddNote(newNote) {
+    base.post(this.router.getCurrentParams().username, {
+      data: this.state.notes.concat([newNote])
+    });
+  }
+  render() {
+    let username = this.router.getCurrentParams().username;
     return (
       <div className="row">
         <div className="col-md-4">
-          <UserProfile username={username} bio={this.state.bio} />
+          <UserProfile username={username} bio={this.state.bio}/>
         </div>
         <div className="col-md-4">
-          <Repos username={username} repos={this.state.repos}/>
+          <Repos username={username} repos={this.state.repos} />
         </div>
         <div className="col-md-4">
           <Notes
             username={username}
             notes={this.state.notes}
-            addNote={this.handleAddNote} />
+            addNote={this.handleAddNote.bind(this)} />
         </div>
       </div>
-    );
+    )
   }
-});
+};
 
-module.exports = Profile;
+Profile.contextTypes = {
+  router: React.PropTypes.func.isRequired
+};
+
+export default Profile;

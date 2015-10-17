@@ -1,13 +1,13 @@
-require('bootstrap/less/bootstrap.less');
-//require('./main.css');
+import 'bootstrap/less/bootstrap.less';
+//import './main.css';
 
-var React = require('react');
-var Router = require('react-router');
-var routes = require('./config/routes');
+import React from 'react';
+import Router from 'react-router';
+import routes from './config/routes';
 
 const app = document.createElement('div');
 document.body.appendChild(app);
 
-Router.run(routes, function (Root) {
-  React.render(<Root />, app);
+Router.run(routes, (Root, state) => {
+  React.render(<Root { ...state } />, app);
 });

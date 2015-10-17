@@ -24,7 +24,7 @@ var common = {
       {
         test: /\.jsx?$/,
         exclude: /node_modules/,
-        loaders: ['babel'],
+        loaders: ['babel']
       },
       {test: /bootstrap\/js\//, loader: 'imports?jQuery=jquery' },
       {test: /\.less$/, loader: 'style-loader!css-loader!less-loader'},

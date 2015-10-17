@@ -1,7 +1,7 @@
-var React = require('react');
+import React, { PropTypes } from 'react'
 
-var NotesList = React.createClass({
-  render: function(){
+class NotesList extends React.Component {
+  render () {
     var notes = this.props.notes.map(function(note, index){
       return (
         <li className="list-group-item" key={index}>
@@ -15,6 +15,6 @@ var NotesList = React.createClass({
       </ul>
     )
   }
-});
+}
 
-module.exports = NotesList;
+export default NotesList;
